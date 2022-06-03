@@ -1,115 +1,63 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * Generated with the TypeScript template
- * https://github.com/react-native-community/react-native-template-typescript
- *
- * @format
- */
-
 import React from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
+import {StatusBar, StyleSheet} from 'react-native';
+import {ApplicationProvider, IconRegistry} from '@ui-kitten/components';
+import {default as darkTheme} from '@constants/theme/dark.json';
+import {default as lightTheme} from '@constants/theme/light.json';
+import {default as customTheme} from '@constants/theme/appTheme.json';
+import {default as customMapping} from '@constants/theme/mapping.json';
+import {EvaIconsPack} from '@ui-kitten/eva-icons';
+import * as eva from '@eva-design/eva';
+import ThemeContext from './ThemeContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import AppContainer from '@navigation/AppContainer';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+export default function App() {
+  const [theme, setTheme] = React.useState<'light' | 'dark'>('dark');
 
-const Section: React.FC<{
-  title: string;
-}> = ({children, title}) => {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-};
+  React.useEffect(() => {
+    AsyncStorage.getItem('theme').then(value => {
+      if (value === 'light' || value === 'dark') setTheme(value);
+    });
+  }, []);
 
-const App = () => {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  const toggleTheme = () => {
+    const nextTheme = theme === 'light' ? 'dark' : 'light';
+    AsyncStorage.setItem('theme', nextTheme).then(() => {
+      setTheme(nextTheme);
+    });
   };
-
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <SafeAreaProvider>
+      <ThemeContext.Provider value={{theme, toggleTheme}}>
+        <IconRegistry icons={[EvaIconsPack]} />
+        <ApplicationProvider
+          {...eva}
+          theme={
+            theme === 'light'
+              ? {...eva.light, ...customTheme, ...lightTheme}
+              : {...eva.dark, ...customTheme, ...darkTheme}
+          }
+          customMapping={{...eva.mapping, ...customMapping}}>
+          <SafeAreaProvider>
+            <StatusBar
+              barStyle={theme === 'dark' ? 'light-content' : 'dark-content'}
+              translucent={true}
+              backgroundColor={'#00000000'}
+            />
+            <AppContainer />
+          </SafeAreaProvider>
+        </ApplicationProvider>
+      </ThemeContext.Provider>
+    </SafeAreaProvider>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
-
-export default App;
